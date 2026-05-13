@@ -2,6 +2,7 @@ mod camera;
 mod hitrecord;
 mod ray;
 mod spheres;
+mod utils;
 mod vector3;
 
 use crate::camera::Camera;
@@ -10,6 +11,7 @@ use crate::ray::Ray;
 use crate::spheres::Spheres;
 use crate::spheres::is_hit_sphere;
 use crate::spheres::setup_spheres;
+use crate::utils::INFINITY;
 use crate::vector3::Vector3;
 
 struct Pixelu8 {
@@ -48,6 +50,7 @@ pub fn pixel_from_ray_and_spheres(
             spheres.spheres_radius[i],
             hit_record,
         ) {
+            // return spheres.spheres_colors[i];
             return (hit_record.normal + 1.0) * 0.5;
         }
     }
@@ -66,6 +69,7 @@ fn main() {
     let spheres = setup_spheres();
 
     let mut hit_record = HitRecord::new();
+    hit_record.t_max = INFINITY;
 
     println!("P3");
     println!("{} {}", image_x_width, image_y_height);

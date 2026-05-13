@@ -22,6 +22,13 @@ impl Spheres {
 pub fn setup_spheres() -> Spheres {
     let mut spheres = Spheres::new();
 
+    let sphere_center = Vector3::new(0.0, -101.0, -1.0);
+    let sphere_radius = 100.0;
+
+    spheres.spheres_centers.push(sphere_center);
+    spheres.spheres_radius.push(sphere_radius);
+    spheres.spheres_colors.push(Vector3::new(0.0, 1.0, 0.0));
+
     let sphere_center = Vector3::new(0.0, 0.0, -2.0);
     let sphere_radius = 0.5;
 
@@ -52,9 +59,9 @@ pub fn is_hit_sphere(
         return false;
     }
 
-    let discriminant_squared = discriminant * discriminant;
+    let delta_sqrt = discriminant.sqrt();
 
-    let root = (h - discriminant_squared) / a;
+    let root = (h - delta_sqrt) / a;
 
     if root < hit_record.t_min || root > hit_record.t_max {
         return false;
@@ -63,10 +70,7 @@ pub fn is_hit_sphere(
     hit_record.t = root;
     hit_record.point = ray.at(root);
     hit_record.normal = (hit_record.point - sphere_center) / sphere_radius;
-    eprintln!(
-        "hit_record.normal {:?}--------------------------------------------------------------------------",
-        hit_record.normal
-    );
+    hit_record.resolve_front_face_and_normal(ray.get_direction());
 
     return true;
 }
