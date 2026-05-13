@@ -1,3 +1,4 @@
+use crate::utils::INFINITY;
 use crate::vector3::Vector3;
 use crate::vector3::dot;
 
@@ -27,5 +28,14 @@ impl HitRecord {
         } else {
             self.front_face = true;
         }
+    }
+
+    pub fn reset(&mut self) {
+        self.t = 0.0;
+        self.point = Vector3::new(0.0, 0.0, 0.0);
+        self.normal = Vector3::new(0.0, 0.0, 0.0);
+        self.t_min = 0.0;
+        self.t_max = INFINITY;
+        self.front_face = false;
     }
 }

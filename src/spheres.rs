@@ -36,6 +36,13 @@ pub fn setup_spheres() -> Spheres {
     spheres.spheres_radius.push(sphere_radius);
     spheres.spheres_colors.push(Vector3::new(1.0, 0.0, 0.0));
 
+    let sphere_center = Vector3::new(1.0, 0.0, -5.0);
+    let sphere_radius = 0.75;
+
+    spheres.spheres_centers.push(sphere_center);
+    spheres.spheres_radius.push(sphere_radius);
+    spheres.spheres_colors.push(Vector3::new(0.0, 0.0, 1.0));
+
     return spheres;
 }
 
@@ -61,11 +68,14 @@ pub fn is_hit_sphere(
 
     let delta_sqrt = discriminant.sqrt();
 
-    let root = (h - delta_sqrt) / a;
+    let roots = [(h - delta_sqrt) / a, (h + delta_sqrt) / a];
 
-    if root < hit_record.t_min || root > hit_record.t_max {
+    let Some(&root) = roots
+        .iter()
+        .find(|&&r| r >= hit_record.t_min && r <= hit_record.t_max)
+    else {
         return false;
-    }
+    };
 
     hit_record.t = root;
     hit_record.point = ray.at(root);
