@@ -2,12 +2,14 @@ use crate::ray::Ray;
 use crate::vector3::Vector3;
 use crate::vector3::dot;
 
+use crate::material::Material;
+
 use crate::hitrecord::HitRecord;
 
 pub struct Spheres {
     pub spheres_centers: Vec<Vector3>,
     pub spheres_radius: Vec<f32>,
-    pub spheres_colors: Vec<Vector3>,
+    pub spheres_materials: Vec<Material>,
 }
 
 impl Spheres {
@@ -15,33 +17,50 @@ impl Spheres {
         Self {
             spheres_centers: Vec::new(),
             spheres_radius: Vec::new(),
-            spheres_colors: Vec::new(),
+            spheres_materials: Vec::new(),
         }
     }
 }
 pub fn setup_spheres() -> Spheres {
     let mut spheres = Spheres::new();
 
-    let sphere_center = Vector3::new(0.0, -101.0, -1.0);
-    let sphere_radius = 100.0;
+    spheres
+        .spheres_centers
+        .push(Vector3::new(0.0, -100.5, -1.0));
+    spheres.spheres_radius.push(100.0);
+    spheres
+        .spheres_materials
+        .push(Material::new_lambertian(Vector3::new(0.1, 0.2, 0.1)));
 
-    spheres.spheres_centers.push(sphere_center);
-    spheres.spheres_radius.push(sphere_radius);
-    spheres.spheres_colors.push(Vector3::new(0.0, 1.0, 0.0));
+    spheres.spheres_centers.push(Vector3::new(0.0, 0.0, -1.2));
+    spheres.spheres_radius.push(0.5);
+    spheres
+        .spheres_materials
+        .push(Material::new_metal(Vector3::new(0.8, 0.8, 0.8), 0.0));
 
-    let sphere_center = Vector3::new(0.0, 0.0, -2.0);
-    let sphere_radius = 0.5;
+    spheres.spheres_centers.push(Vector3::new(-0.7, -0.3, -0.8));
+    spheres.spheres_radius.push(0.2);
+    spheres
+        .spheres_materials
+        .push(Material::new_lambertian(Vector3::new(0.6, 0.05, 0.05)));
 
-    spheres.spheres_centers.push(sphere_center);
-    spheres.spheres_radius.push(sphere_radius);
-    spheres.spheres_colors.push(Vector3::new(1.0, 0.0, 0.0));
+    spheres.spheres_centers.push(Vector3::new(0.6, -0.3, -0.7));
+    spheres.spheres_radius.push(0.2);
+    spheres
+        .spheres_materials
+        .push(Material::new_metal(Vector3::new(0.8, 0.6, 0.2), 0.3));
 
-    let sphere_center = Vector3::new(1.0, 0.0, -5.0);
-    let sphere_radius = 0.75;
+    spheres.spheres_centers.push(Vector3::new(0.8, 0.1, -1.5));
+    spheres.spheres_radius.push(0.3);
+    spheres
+        .spheres_materials
+        .push(Material::new_lambertian(Vector3::new(0.1, 0.4, 0.3)));
 
-    spheres.spheres_centers.push(sphere_center);
-    spheres.spheres_radius.push(sphere_radius);
-    spheres.spheres_colors.push(Vector3::new(0.0, 0.0, 1.0));
+    spheres.spheres_centers.push(Vector3::new(-0.8, 0.4, -1.3));
+    spheres.spheres_radius.push(0.2);
+    spheres
+        .spheres_materials
+        .push(Material::new_lambertian(Vector3::new(0.9, 0.9, 0.9)));
 
     return spheres;
 }

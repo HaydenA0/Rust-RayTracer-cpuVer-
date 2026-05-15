@@ -34,7 +34,7 @@ impl HitRecord {
         self.t = 0.0;
         self.point = Vector3::new(0.0, 0.0, 0.0);
         self.normal = Vector3::new(0.0, 0.0, 0.0);
-        self.t_min = 0.0;
+        self.t_min = 0.0001;
         self.t_max = INFINITY;
         self.front_face = false;
     }

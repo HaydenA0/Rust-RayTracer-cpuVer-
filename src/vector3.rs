@@ -1,3 +1,5 @@
+use crate::utils::generate_random_float_in_range;
+use crate::utils::generate_random_float_unit;
 use std::ops::{Add, Div, Mul, Sub};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -11,6 +13,20 @@ impl Vector3 {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
     }
+    pub fn new_random_unit() -> Self {
+        let x = generate_random_float_unit();
+        let y = generate_random_float_unit();
+        let z = generate_random_float_unit();
+        Self { x, y, z }
+    }
+
+    pub fn new_random_in_range(min: f32, max: f32) -> Self {
+        let x = generate_random_float_in_range(min, max);
+        let y = generate_random_float_in_range(min, max);
+        let z = generate_random_float_in_range(min, max);
+        Self { x, y, z }
+    }
+
     pub fn length(&self) -> f32 {
         self.length_squared().sqrt()
     }

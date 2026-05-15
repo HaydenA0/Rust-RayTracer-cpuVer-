@@ -9,7 +9,7 @@ pub struct Camera {
 
 impl Camera {
     pub fn new(width: u32, height: u32) -> Self {
-        let focal_length = 1.0;
+        let focal_length = 0.6;
         let viewport_width = 2.0;
         let viewport_height = viewport_width / (width as f32 / height as f32);
         let origin = Vector3::new(0.0, 0.0, 0.0);
