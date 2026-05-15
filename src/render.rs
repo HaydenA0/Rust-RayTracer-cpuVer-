@@ -25,15 +25,20 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn new(width: u32, aspect_ratio: f32) -> Self {
+    pub fn new(
+        width: u32,
+        aspect_ratio: f32,
+        samples_per_pixel: u32,
+        max_depth_recursion: u32,
+    ) -> Self {
         let height = (width as f32 / aspect_ratio).round() as u32;
         let height = if height < 1 { 1 } else { height };
 
         let camera = Camera::new(width, height);
         let spheres = setup_spheres();
 
-        let samples_per_pixel = 1000;
-        let max_depth_recursion = 50;
+        let samples_per_pixel = samples_per_pixel;
+        let max_depth_recursion = max_depth_recursion;
 
         Self {
             width,

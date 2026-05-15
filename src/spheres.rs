@@ -1,4 +1,6 @@
 use crate::ray::Ray;
+use crate::utils::generate_random_float_in_range;
+use crate::utils::generate_random_float_unit;
 use crate::vector3::Vector3;
 use crate::vector3::dot;
 
@@ -26,43 +28,75 @@ pub fn setup_spheres() -> Spheres {
 
     spheres
         .spheres_centers
-        .push(Vector3::new(0.0, -100.5, -1.0));
-    spheres.spheres_radius.push(100.0);
+        .push(Vector3::new(0.0, -1000.0, 0.0));
+    spheres.spheres_radius.push(1000.0);
     spheres
         .spheres_materials
-        .push(Material::new_lambertian(Vector3::new(0.1, 0.2, 0.1)));
+        .push(Material::new_lambertian(Vector3::new(0.5, 0.5, 0.5)));
 
-    spheres.spheres_centers.push(Vector3::new(0.0, 0.0, -1.2));
-    spheres.spheres_radius.push(0.5);
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = generate_random_float_unit();
+            let center = Vector3::new(
+                a as f32 + 0.9 * generate_random_float_unit(),
+                0.2,
+                b as f32 + 0.9 * generate_random_float_unit(),
+            );
+
+            let diff = center - Vector3::new(4.0, 0.2, 0.0);
+            let distance = (diff.x * diff.x + diff.y * diff.y + diff.z * diff.z).sqrt();
+
+            if distance > 0.9 {
+                spheres.spheres_centers.push(center);
+                spheres.spheres_radius.push(0.2);
+
+                if choose_mat < 0.8 {
+                    let albedo = Vector3::new(
+                        generate_random_float_unit() * generate_random_float_unit(),
+                        generate_random_float_unit() * generate_random_float_unit(),
+                        generate_random_float_unit() * generate_random_float_unit(),
+                    );
+                    spheres
+                        .spheres_materials
+                        .push(Material::new_lambertian(albedo));
+                } else if choose_mat < 0.95 {
+                    let albedo = Vector3::new(
+                        generate_random_float_in_range(0.5, 1.0),
+                        generate_random_float_in_range(0.5, 1.0),
+                        generate_random_float_in_range(0.5, 1.0),
+                    );
+                    let fuzz = generate_random_float_in_range(0.0, 0.5);
+                    spheres
+                        .spheres_materials
+                        .push(Material::new_metal(albedo, fuzz));
+                } else {
+                    spheres
+                        .spheres_materials
+                        .push(Material::new_metal(Vector3::new(0.5, 0.5, 0.5), 0.5));
+                }
+            }
+        }
+    }
+
+    spheres.spheres_centers.push(Vector3::new(0.0, 1.0, 0.0));
+    spheres.spheres_radius.push(1.0);
     spheres
         .spheres_materials
-        .push(Material::new_metal(Vector3::new(0.8, 0.8, 0.8), 0.0));
+        .push(Material::new_metal(Vector3::new(0.4, 0.2, 0.1), 0.7));
 
-    spheres.spheres_centers.push(Vector3::new(-0.7, -0.3, -0.8));
-    spheres.spheres_radius.push(0.2);
+    spheres.spheres_centers.push(Vector3::new(-4.0, 1.0, 0.0));
+    spheres.spheres_radius.push(1.0);
     spheres
         .spheres_materials
-        .push(Material::new_lambertian(Vector3::new(0.6, 0.05, 0.05)));
+        .push(Material::new_lambertian(Vector3::new(0.4, 0.2, 0.1)));
 
-    spheres.spheres_centers.push(Vector3::new(0.6, -0.3, -0.7));
-    spheres.spheres_radius.push(0.2);
+    spheres.spheres_centers.push(Vector3::new(4.0, 1.0, 0.0));
+    spheres.spheres_radius.push(1.0);
     spheres
         .spheres_materials
-        .push(Material::new_metal(Vector3::new(0.8, 0.6, 0.2), 0.3));
+        .push(Material::new_metal(Vector3::new(0.7, 0.6, 0.5), 0.0));
 
-    spheres.spheres_centers.push(Vector3::new(0.8, 0.1, -1.5));
-    spheres.spheres_radius.push(0.3);
     spheres
-        .spheres_materials
-        .push(Material::new_lambertian(Vector3::new(0.1, 0.4, 0.3)));
-
-    spheres.spheres_centers.push(Vector3::new(-0.8, 0.4, -1.3));
-    spheres.spheres_radius.push(0.2);
-    spheres
-        .spheres_materials
-        .push(Material::new_lambertian(Vector3::new(0.9, 0.9, 0.9)));
-
-    return spheres;
 }
 
 pub fn is_hit_sphere(

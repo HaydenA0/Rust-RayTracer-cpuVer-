@@ -11,6 +11,6 @@ mod vector3;
 use crate::render::Renderer;
 
 fn main() {
-    let renderer = Renderer::new(1920, 16.0 / 9.0);
+    let renderer = Renderer::new(1920, 16.0 / 9.0, 500, 50);
     renderer.render();
 }
