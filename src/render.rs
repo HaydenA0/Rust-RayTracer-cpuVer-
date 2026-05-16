@@ -1,10 +1,13 @@
 use crate::camera::Camera;
 use crate::hitrecord::HitRecord;
 use crate::ray::Ray;
-use crate::sampling::random_on_hemisphere;
 use crate::utils::display_progress;
 use crate::utils::smaple_from_unit_square;
 
+use std::fs::File;
+use std::io::{BufWriter, Write};
+
+use crate::image::Imagef32;
 use crate::spheres::{Spheres, is_hit_sphere, setup_spheres};
 use crate::utils::{EPSILON, INFINITY};
 use crate::vector3::Vector3;
@@ -50,13 +53,31 @@ impl Renderer {
         }
     }
 
-    pub fn render(&self) {
-        println!("P3");
-        println!("{} {}", self.width, self.height);
-        println!("255");
+    pub fn write_ppm(&self, image: &Imagef32, filename: &str) -> std::io::Result<()> {
+        let file = File::create(filename)?;
+        let mut writer = BufWriter::new(file);
 
-        for y in 0..self.height {
+        writeln!(writer, "P3")?;
+        writeln!(writer, "{} {}", self.width, self.height)?;
+        writeln!(writer, "255")?;
+
+        (0..self.height).for_each(|y| {
             display_progress(self.height, y);
+
+            (0..self.width).for_each(|x| {
+                let pixel = image.get_pixel(x, y);
+                let pixelu8 = self.pixel_to_u8(pixel);
+
+                let _ = writeln!(writer, "{} {} {}", pixelu8.r, pixelu8.g, pixelu8.b);
+            });
+        });
+
+        Ok(())
+    }
+
+    pub fn render_and_fill_image(&self) -> Imagef32 {
+        let mut image = Imagef32::new(self.width, self.height);
+        for y in 0..self.height {
             for x in 0..self.width {
                 let mut hit_record = HitRecord::new();
                 hit_record.t_min = EPSILON;
@@ -71,12 +92,10 @@ impl Renderer {
                     pixel_f = pixel_f + self.ray_color(ray, &mut hit_record, &mut recursion_depth);
                 }
                 pixel_f = pixel_f * (1.0 / self.samples_per_pixel as f32);
-                let pixel_u = self.pixel_to_u8(pixel_f);
-
-                println!("{} {} {}", pixel_u.r, pixel_u.g, pixel_u.b);
+                image.set_pixel(x, y, pixel_f);
             }
         }
-        eprintln!("Done.");
+        image
     }
 
     fn ray_color(
