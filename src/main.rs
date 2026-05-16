@@ -1,3 +1,4 @@
+mod bhv;
 mod camera;
 mod hitrecord;
 mod image;

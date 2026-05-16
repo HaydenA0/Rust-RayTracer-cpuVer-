@@ -66,6 +66,17 @@ impl Add<f32> for Vector3 {
         }
     }
 }
+impl Sub<f32> for Vector3 {
+    type Output = Self;
+
+    fn sub(self, rhs: f32) -> Self {
+        Self {
+            x: self.x - rhs,
+            y: self.y - rhs,
+            z: self.z - rhs,
+        }
+    }
+}
 
 impl Sub for Vector3 {
     type Output = Self;
@@ -118,6 +129,19 @@ impl Div<f32> for Vector3 {
             x: self.x / rhs,
             y: self.y / rhs,
             z: self.z / rhs,
+        }
+    }
+}
+
+impl Index<usize> for Vector3 {
+    type Output = f32;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("Index out of bounds for Vector3"),
         }
     }
 }

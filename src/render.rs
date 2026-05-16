@@ -1,3 +1,4 @@
+use crate::bhv::{BVHNode, build_bhv_tree};
 use crate::camera::Camera;
 use crate::hitrecord::HitRecord;
 use crate::ray::Ray;
@@ -28,6 +29,7 @@ pub struct Renderer {
     spheres: Spheres,
     samples_per_pixel: u32,
     max_depth_recursion: u32,
+    bvh: BVHNode,
 }
 
 impl Renderer {
@@ -46,6 +48,10 @@ impl Renderer {
         let samples_per_pixel = samples_per_pixel;
         let max_depth_recursion = max_depth_recursion;
 
+        let mut indices: Vec<usize> = (0..spheres.get_len()).collect();
+
+        let bhv = build_bhv_tree(&spheres, &mut indices);
+
         Self {
             width,
             height,
@@ -53,6 +59,7 @@ impl Renderer {
             spheres,
             samples_per_pixel,
             max_depth_recursion,
+            bvh: bhv,
         }
     }
 

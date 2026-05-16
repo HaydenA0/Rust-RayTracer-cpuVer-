@@ -22,6 +22,9 @@ impl Spheres {
             spheres_materials: Vec::new(),
         }
     }
+    pub fn get_len(&self) -> usize {
+        self.spheres_centers.len()
+    }
 }
 pub fn setup_spheres() -> Spheres {
     let mut spheres = Spheres::new();
