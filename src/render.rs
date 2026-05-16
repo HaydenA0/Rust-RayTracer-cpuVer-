@@ -1,8 +1,9 @@
 use crate::camera::Camera;
 use crate::hitrecord::HitRecord;
 use crate::ray::Ray;
-use crate::utils::display_progress;
-use crate::utils::smaple_from_unit_square;
+
+use crate::utils::sample_from_unit_square;
+use crate::utils::setup_progress_bar;
 
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -11,6 +12,8 @@ use crate::image::Imagef32;
 use crate::spheres::{Spheres, is_hit_sphere, setup_spheres};
 use crate::utils::{EPSILON, INFINITY};
 use crate::vector3::Vector3;
+
+use rayon::prelude::*;
 
 struct Pixelu8 {
     r: u8,
@@ -62,8 +65,6 @@ impl Renderer {
         writeln!(writer, "255")?;
 
         (0..self.height).for_each(|y| {
-            display_progress(self.height, y);
-
             (0..self.width).for_each(|x| {
                 let pixel = image.get_pixel(x, y);
                 let pixelu8 = self.pixel_to_u8(pixel);
@@ -75,7 +76,8 @@ impl Renderer {
         Ok(())
     }
 
-    pub fn render_and_fill_image(&self) -> Imagef32 {
+    pub fn render_and_fill_image_seq(&self) -> Imagef32 {
+        let progress_bar = setup_progress_bar(self.height);
         let mut image = Imagef32::new(self.width, self.height);
         for y in 0..self.height {
             for x in 0..self.width {
@@ -94,8 +96,58 @@ impl Renderer {
                 pixel_f = pixel_f * (1.0 / self.samples_per_pixel as f32);
                 image.set_pixel(x, y, pixel_f);
             }
+            progress_bar.inc(1);
         }
+        progress_bar.finish_with_message("Done Rendering");
         image
+    }
+
+    pub fn render_and_fill_image_parall(&self) -> Imagef32 {
+        // We can not mutate the image while we are iterating over it with
+        // no synchronization mechanism,
+        // so we need to collect the pixels in a vector and then bundle it back
+        // as an image.
+
+        // this function is becoming fat,
+        // rendering collecting and filling the image
+        // then printing the progress in the console
+
+        let progress_bar = setup_progress_bar(self.height);
+
+        let pixels: Vec<Vector3> = (0..self.height)
+            .into_par_iter()
+            .map(|y| {
+                let row_pixels: Vec<Vector3> = (0..self.width)
+                    .map(|x| {
+                        let mut pixel_f = Vector3::new(0.0, 0.0, 0.0);
+                        for _ in 0..self.samples_per_pixel {
+                            let mut hit_record = HitRecord::new();
+                            hit_record.reset();
+                            let mut recursion_depth = 0;
+                            let ray = get_ray_at_coordinates(x, y, &self.camera);
+                            pixel_f = pixel_f
+                                + self.ray_color(ray, &mut hit_record, &mut recursion_depth);
+                        }
+                        pixel_f * (1.0 / self.samples_per_pixel as f32)
+                    })
+                    .collect();
+
+                progress_bar.inc(1);
+
+                row_pixels
+            })
+            .flatten()
+            .collect();
+
+        progress_bar.finish_with_message("Done Rendering");
+
+        // the image is now ready to be returned
+
+        Imagef32 {
+            width: self.width,
+            height: self.height,
+            pixels,
+        }
     }
 
     fn ray_color(
@@ -104,34 +156,27 @@ impl Renderer {
         hit_record: &mut HitRecord,
         recursion_depth: &mut u32,
     ) -> Vector3 {
-        let mut hit_anything = false;
-        let mut current_sphere = 0;
-
-        for i in 0..self.spheres.spheres_centers.len() {
-            if is_hit_sphere(
-                ray,
-                self.spheres.spheres_centers[i],
-                self.spheres.spheres_radius[i],
-                hit_record,
-            ) {
-                hit_anything = true;
-                current_sphere = i;
-
-                hit_record.t_max = hit_record.t;
-            }
-        }
         if *recursion_depth > self.max_depth_recursion {
             return Vector3::new(0.0, 0.0, 0.0);
         }
+        let mut hit_anything = false;
+        let mut current_sphere = 0;
+
+        for (sphere_index, (center, radius)) in self
+            .spheres
+            .spheres_centers
+            .iter()
+            .zip(&self.spheres.spheres_radius)
+            .enumerate()
+        {
+            if is_hit_sphere(ray, *center, *radius, hit_record) {
+                hit_anything = true;
+                current_sphere = sphere_index;
+                hit_record.t_max = hit_record.t;
+            }
+        }
 
         if hit_anything {
-            // return if return_color {
-            //     self.spheres.spheres_colors[current_sphere]
-            // } else {
-            //     (final_normal + 1.0) * 0.5
-            // };
-            // NOTE : some reccursive magic
-
             if let Some((attenuation, ray)) = self.spheres.spheres_materials[current_sphere]
                 .scatter(ray.get_direction(), hit_record)
             {
@@ -151,7 +196,7 @@ impl Renderer {
     fn pixel_to_u8(&self, pixel: Vector3) -> Pixelu8 {
         // gamma_correction 2.0
         // TODO : make it configurable
-        let gamma_correction = |value: f32| (value.sqrt()).clamp(0.0, 1.0) as f32;
+        let gamma_correction = |value: f32| (value.clamp(0.0, 1.0)).sqrt() as f32;
         let f = |value: f32| (value.clamp(0.0, 1.0) * 255.0).round() as u8;
         Pixelu8 {
             r: f(gamma_correction(pixel.x)),
@@ -162,7 +207,7 @@ impl Renderer {
 }
 
 pub fn get_ray_at_coordinates(i: u32, j: u32, camera: &Camera) -> Ray {
-    let offset = smaple_from_unit_square();
+    let offset = sample_from_unit_square();
     let pixel_sample = camera.pixel_00_loc
         + (camera.pixel_delta_u * (offset.x + i as f32))
         + (camera.pixel_delta_v * (offset.y + j as f32));

@@ -123,10 +123,13 @@ pub fn is_hit_sphere(
 
     let roots = [(h - delta_sqrt) / a, (h + delta_sqrt) / a];
 
-    let Some(&root) = roots
+    // if else has a small small speedup
+    let root = if let Some(&r) = roots
         .iter()
         .find(|&&r| r >= hit_record.t_min && r <= hit_record.t_max)
-    else {
+    {
+        r
+    } else {
         return false;
     };
 
