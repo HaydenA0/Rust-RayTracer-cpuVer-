@@ -14,7 +14,7 @@ use crate::render::Renderer;
 
 fn main() {
     let output_filename = "output.ppm";
-    let renderer = Renderer::new(400, 16.0 / 9.0, 500, 10);
+    let renderer = Renderer::new(400, 16.0 / 9.0, 1000, 100);
     let image = renderer.render_and_fill_image_parall();
     // let image = renderer.render_and_fill_image_seq();
     let results = renderer.write_ppm(&image, output_filename);

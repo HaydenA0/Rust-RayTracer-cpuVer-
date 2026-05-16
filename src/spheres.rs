@@ -145,4 +145,46 @@ pub fn is_hit_sphere(
     return true;
 }
 
-pub fn setup_sphere_scene1(camera: &Camera) -> Spheres {}
+pub fn setup_sphere_scene1(_camera: &Camera) -> Spheres {
+    let mut spheres = Spheres::new();
+
+    spheres
+        .spheres_centers
+        .push(Vector3::new(0.0, -1000.0, 0.0));
+    spheres.spheres_radius.push(1000.0);
+    spheres
+        .spheres_materials
+        .push(Material::new_lambertian(Vector3::new(0.1, 0.1, 0.1)));
+
+    spheres.spheres_centers.push(Vector3::new(-2.5, 1.5, -1.0));
+    spheres.spheres_radius.push(1.5);
+    spheres
+        .spheres_materials
+        .push(Material::new_diffuse_light(Vector3::new(5.0, 3.5, 2.0)));
+
+    spheres.spheres_centers.push(Vector3::new(0.0, 1.0, 0.0));
+    spheres.spheres_radius.push(1.0);
+    spheres
+        .spheres_materials
+        .push(Material::new_dielectric(Vector3::new(1.0, 1.0, 1.0), 1.5));
+
+    spheres.spheres_centers.push(Vector3::new(2.2, 1.0, 0.5));
+    spheres.spheres_radius.push(1.0);
+    spheres
+        .spheres_materials
+        .push(Material::new_metal(Vector3::new(0.8, 0.8, 0.8), 0.2));
+
+    spheres.spheres_centers.push(Vector3::new(0.8, 0.4, 2.0));
+    spheres.spheres_radius.push(0.4);
+    spheres
+        .spheres_materials
+        .push(Material::new_lambertian(Vector3::new(0.1, 0.2, 0.6)));
+
+    spheres.spheres_centers.push(Vector3::new(-1.0, 0.3, 1.8));
+    spheres.spheres_radius.push(0.3);
+    spheres
+        .spheres_materials
+        .push(Material::new_metal(Vector3::new(0.9, 0.7, 0.1), 0.0));
+
+    spheres
+}

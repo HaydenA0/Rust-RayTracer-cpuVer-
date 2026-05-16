@@ -42,8 +42,8 @@ impl Renderer {
         let height = (width as f32 / aspect_ratio).round() as u32;
         let height = if height < 1 { 1 } else { height };
 
-        let camera = Camera::new(width, height);
-        let spheres = setup_sphere_scene1();
+        let camera = Camera::new_cin(width, height);
+        let spheres = setup_sphere_scene1(&camera);
 
         let samples_per_pixel = samples_per_pixel;
         let max_depth_recursion = max_depth_recursion;
@@ -166,24 +166,27 @@ impl Renderer {
         if *recursion_depth > self.max_depth_recursion {
             return Vector3::new(0.0, 0.0, 0.0);
         }
-        let hit_anything = hit_bvh(&self.bvh, &ray, hit_record, &self.spheres);
-        let current_sphere = hit_record.current_sphere;
 
-        if hit_anything {
-            if let Some((attenuation, ray)) = self.spheres.spheres_materials[current_sphere]
-                .scatter(ray.get_direction(), hit_record)
+        if hit_bvh(&self.bvh, &ray, hit_record, &self.spheres) {
+            let current_sphere = hit_record.current_sphere;
+            let material = &self.spheres.spheres_materials[current_sphere];
+            let emitted = material.emitted();
+
+            if let Some((attenuation, scattered_ray)) =
+                material.scatter(ray.get_direction(), hit_record)
             {
                 *recursion_depth += 1;
-                return self.ray_color(ray, hit_record, recursion_depth) * attenuation;
+                return emitted
+                    + (self.ray_color(scattered_ray, hit_record, recursion_depth) * attenuation);
             } else {
-                return Vector3::new(0.0, 0.0, 0.0);
+                return emitted;
             }
         }
 
-        let unit_direction = ray.get_direction();
-        let unit_direction: Vector3 = unit_direction / unit_direction.length();
-        let a = 0.5 * (unit_direction.y + 1.0);
-        Vector3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vector3::new(0.5, 0.7, 1.0) * a
+        // let unit_direction = ray.get_direction().normalize();
+        // let a = 0.5 * (unit_direction.y + 1.0);
+        // Vector3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vector3::new(0.5, 0.7, 1.0) * a
+        Vector3::new(0.1, 0.1, 0.1)
     }
 
     fn pixel_to_u8(&self, pixel: Vector3) -> Pixelu8 {
