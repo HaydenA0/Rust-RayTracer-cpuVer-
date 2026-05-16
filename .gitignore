@@ -14,7 +14,6 @@ Cargo.lock
 
 /output.ppm
 /images/*.ppm
-/images/*.png
 /profile.json.gz
 
 
