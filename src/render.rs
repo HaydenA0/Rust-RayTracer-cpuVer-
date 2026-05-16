@@ -183,10 +183,9 @@ impl Renderer {
             }
         }
 
-        // let unit_direction = ray.get_direction().normalize();
-        // let a = 0.5 * (unit_direction.y + 1.0);
-        // Vector3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vector3::new(0.5, 0.7, 1.0) * a
-        Vector3::new(0.1, 0.1, 0.1)
+        let unit_direction = ray.get_direction().normalize();
+        let a = 0.5 * (unit_direction.y + 1.0);
+        Vector3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vector3::new(0.5, 0.7, 1.0) * a
     }
 
     fn pixel_to_u8(&self, pixel: Vector3) -> Pixelu8 {

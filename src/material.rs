@@ -13,20 +13,10 @@ pub enum Material {
 }
 
 impl Material {
-    pub fn get_albedo(&self) -> Vector3 {
-        match self {
-            Material::Lambertian { albedo } => *albedo,
-            Material::Metal { albedo, .. } => *albedo,
-            Material::Dielectric { albedo, .. } => *albedo,
-            Material::DiffuseLight { albedo } => *albedo,
-        }
-    }
-
-    pub fn get_fuzz(&self) -> f32 {
-        match self {
-            Material::Metal { fuzz, .. } => *fuzz,
-            _ => 0.0,
-        }
+    fn reflectance(cosine: f32, ref_idx: f32) -> f32 {
+        let mut r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+        r0 = r0 * r0;
+        r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
     }
 
     pub fn emitted(&self) -> Vector3 {
@@ -77,33 +67,31 @@ impl Material {
             }
             Material::Dielectric { albedo, ir } => {
                 let unit_direction = ray_in.normalize();
-                let is_exiting = dot(unit_direction, hit_record.normal) > 0.0;
-
-                let refraction_ratio = if is_exiting { *ir } else { 1.0 / *ir };
-                let actual_normal = if is_exiting {
-                    hit_record.normal * -1.0
-                } else {
-                    hit_record.normal
-                };
-
-                let cos_theta = dot(unit_direction * -1.0, actual_normal).min(1.0);
+                let cos_theta = dot(unit_direction * -1.0, hit_record.normal).min(1.0);
                 let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
+                let refraction_ratio = if dot(unit_direction, hit_record.normal) > 0.0 {
+                    *ir
+                } else {
+                    1.0 / *ir
+                };
                 let cannot_refract = refraction_ratio * sin_theta > 1.0;
 
-                let direction = if cannot_refract {
-                    reflect(unit_direction, actual_normal)
+                let direction = if cannot_refract
+                    || Self::reflectance(cos_theta, refraction_ratio) > rand::random::<f32>()
+                {
+                    reflect(unit_direction, hit_record.normal)
                 } else {
                     let r_out_perp =
-                        (unit_direction + actual_normal * cos_theta) * refraction_ratio;
+                        (unit_direction + hit_record.normal * cos_theta) * refraction_ratio;
                     let r_out_parallel =
-                        actual_normal * -((1.0 - dot(r_out_perp, r_out_perp)).abs().sqrt());
+                        hit_record.normal * -((1.0 - dot(r_out_perp, r_out_perp)).abs().sqrt());
                     r_out_perp + r_out_parallel
                 };
 
-                let scattered_ray = Ray::new(hit_record.point, direction);
-                Some((*albedo, scattered_ray))
+                Some((*albedo, Ray::new(hit_record.point, direction)))
             }
+
             Material::DiffuseLight { .. } => None,
         }
     }
