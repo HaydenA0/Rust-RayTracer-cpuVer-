@@ -1,6 +1,10 @@
 use crate::utils::generate_random_float_in_range;
 use crate::utils::generate_random_float_unit;
+use std::ops::Index;
 use std::ops::{Add, Div, Mul, Sub};
+
+// inlined every function here
+// for maximum performance
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vector3 {
@@ -10,9 +14,12 @@ pub struct Vector3 {
 }
 
 impl Vector3 {
+    #[inline]
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
     }
+
+    #[inline]
     pub fn new_random_unit() -> Self {
         let x = generate_random_float_unit();
         let y = generate_random_float_unit();
@@ -20,6 +27,7 @@ impl Vector3 {
         Self { x, y, z }
     }
 
+    #[inline]
     pub fn new_random_in_range(min: f32, max: f32) -> Self {
         let x = generate_random_float_in_range(min, max);
         let y = generate_random_float_in_range(min, max);
@@ -27,13 +35,17 @@ impl Vector3 {
         Self { x, y, z }
     }
 
+    #[inline]
     pub fn length(&self) -> f32 {
         self.length_squared().sqrt()
     }
 
+    #[inline]
     pub fn length_squared(&self) -> f32 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
+
+    #[inline]
     pub fn normalize(&self) -> Self {
         let length = self.length();
         Self {
@@ -46,6 +58,7 @@ impl Vector3 {
 
 impl Add for Vector3 {
     type Output = Self;
+    #[inline]
     fn add(self, rhs: Self) -> Self {
         Self {
             x: self.x + rhs.x,
@@ -57,7 +70,7 @@ impl Add for Vector3 {
 
 impl Add<f32> for Vector3 {
     type Output = Self;
-
+    #[inline]
     fn add(self, rhs: f32) -> Self {
         Self {
             x: self.x + rhs,
@@ -66,20 +79,10 @@ impl Add<f32> for Vector3 {
         }
     }
 }
-impl Sub<f32> for Vector3 {
-    type Output = Self;
-
-    fn sub(self, rhs: f32) -> Self {
-        Self {
-            x: self.x - rhs,
-            y: self.y - rhs,
-            z: self.z - rhs,
-        }
-    }
-}
 
 impl Sub for Vector3 {
     type Output = Self;
+    #[inline]
     fn sub(self, rhs: Self) -> Self {
         Self {
             x: self.x - rhs.x,
@@ -89,8 +92,21 @@ impl Sub for Vector3 {
     }
 }
 
+impl Sub<f32> for Vector3 {
+    type Output = Self;
+    #[inline]
+    fn sub(self, rhs: f32) -> Self {
+        Self {
+            x: self.x - rhs,
+            y: self.y - rhs,
+            z: self.z - rhs,
+        }
+    }
+}
+
 impl Mul<Vector3> for Vector3 {
     type Output = Self;
+    #[inline]
     fn mul(self, rhs: Self) -> Self {
         Self {
             x: self.x * rhs.x,
@@ -102,6 +118,7 @@ impl Mul<Vector3> for Vector3 {
 
 impl Mul<f32> for Vector3 {
     type Output = Self;
+    #[inline]
     fn mul(self, rhs: f32) -> Self {
         Self {
             x: self.x * rhs,
@@ -113,6 +130,7 @@ impl Mul<f32> for Vector3 {
 
 impl Div<Vector3> for Vector3 {
     type Output = Self;
+    #[inline]
     fn div(self, rhs: Self) -> Self {
         Self {
             x: self.x / rhs.x,
@@ -124,6 +142,7 @@ impl Div<Vector3> for Vector3 {
 
 impl Div<f32> for Vector3 {
     type Output = Self;
+    #[inline]
     fn div(self, rhs: f32) -> Self {
         Self {
             x: self.x / rhs,
@@ -135,7 +154,7 @@ impl Div<f32> for Vector3 {
 
 impl Index<usize> for Vector3 {
     type Output = f32;
-
+    #[inline]
     fn index(&self, index: usize) -> &Self::Output {
         match index {
             0 => &self.x,
@@ -146,6 +165,7 @@ impl Index<usize> for Vector3 {
     }
 }
 
+#[inline]
 pub fn dot(v1: Vector3, v2: Vector3) -> f32 {
     v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
 }

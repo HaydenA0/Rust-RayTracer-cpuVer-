@@ -6,12 +6,13 @@ const T_MIN: f32 = 0.0001;
 
 #[repr(C)]
 pub struct HitRecord {
-    pub point: Vector3,   // 12 bytes
-    pub normal: Vector3,  // 12 bytes
-    pub t: f32,           // 4 bytes
-    pub t_min: f32,       // 4 bytes
-    pub t_max: f32,       // 4 bytes
-    pub front_face: bool, // 1 byte
+    pub point: Vector3,        // 12 bytes
+    pub normal: Vector3,       // 12 bytes
+    pub t: f32,                // 4 bytes
+    pub t_min: f32,            // 4 bytes
+    pub t_max: f32,            // 4 bytes
+    pub front_face: bool,      // 1 byte
+    pub current_sphere: usize, // 4 bytes
 }
 
 impl HitRecord {
@@ -23,6 +24,7 @@ impl HitRecord {
             t_min: T_MIN,
             t_max: INFINITY,
             front_face: false,
+            current_sphere: 0,
         }
     }
     pub fn resolve_front_face_and_normal(&mut self, ray_direction: Vector3) {
@@ -40,5 +42,6 @@ impl HitRecord {
         self.t_min = T_MIN;
         self.t_max = INFINITY;
         self.front_face = false;
+        self.current_sphere = 0;
     }
 }

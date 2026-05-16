@@ -118,3 +118,14 @@ pub struct HitRecord {
 }
 ```
 The gaing is minimum, but it scales up with a lot of new allocations.
+
+I introduced a new system of BHV. The algorithm is supposed to be O(log n), which takes the rendering time from 8 minutes to 2 minutes :
+
+![screenshot](./images/BVHfirstImage.png)
+
+Just because of luck, this image, have a lot of small refelective spheres, which makes it look crispier than the previous images.
+
+This is where I am happy with the performance of this raytracer. These are some shots :
+
+
+

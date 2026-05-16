@@ -1,5 +1,7 @@
+use crate::hitrecord::HitRecord;
 use crate::ray::Ray;
 use crate::spheres::Spheres;
+use crate::spheres::is_hit_sphere;
 use crate::vector3::Vector3;
 
 #[derive(Clone)]
@@ -17,7 +19,7 @@ pub struct BoundingBox {
 }
 
 impl BoundingBox {
-    pub fn is_hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> bool {
+    pub fn is_hit(&self, ray: &Ray, mut t_min: f32, mut t_max: f32) -> bool {
         for axis in 0..3 {
             let inv_direction = 1.0 / ray.get_direction()[axis];
             let mut t_potential_min = (self.min[axis] - ray.get_origin()[axis]) * inv_direction;
@@ -27,8 +29,8 @@ impl BoundingBox {
                 std::mem::swap(&mut t_potential_min, &mut t_potential_max);
             }
 
-            t_min = t_potential_min.min(t_min);
-            t_max = t_potential_max.max(t_max);
+            t_min = t_potential_min.max(t_min);
+            t_max = t_potential_max.min(t_max);
 
             if t_max <= t_min {
                 return false;
@@ -150,4 +152,37 @@ pub fn choose_longest_axis(bounding_box: &BoundingBox) -> Axis {
     } else {
         Axis::Z
     }
+}
+
+pub fn hit_bvh(node: &BVHNode, ray: &Ray, hit_record: &mut HitRecord, spheres: &Spheres) -> bool {
+    if !node
+        .bounding_box
+        .is_hit(ray, hit_record.t_min, hit_record.t_max)
+    {
+        return false;
+    }
+    if node.left.is_none() && node.right.is_none() {
+        let sphere_index = node.sphere.index;
+        let center = spheres.spheres_centers[sphere_index];
+        let radius = spheres.spheres_radius[sphere_index];
+        let hit = is_hit_sphere(*ray, center, radius, hit_record);
+        if hit {
+            hit_record.current_sphere = sphere_index;
+        }
+        return hit;
+    }
+
+    let hit_left = if let Some(left) = &node.left {
+        hit_bvh(left, ray, hit_record, spheres)
+    } else {
+        false
+    };
+
+    let hit_right = if let Some(right) = &node.right {
+        hit_bvh(right, ray, hit_record, spheres)
+    } else {
+        false
+    };
+
+    hit_left || hit_right
 }

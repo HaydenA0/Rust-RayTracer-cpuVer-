@@ -8,6 +8,8 @@ use crate::vector3::dot;
 pub enum Material {
     Lambertian { albedo: Vector3 },
     Metal { albedo: Vector3, fuzz: f32 },
+    Dielectric { albedo: Vector3, ir: f32 },
+    DiffuseLight { albedo: Vector3 },
 }
 
 impl Material {
@@ -15,19 +17,41 @@ impl Material {
         match self {
             Material::Lambertian { albedo } => *albedo,
             Material::Metal { albedo, .. } => *albedo,
+            Material::Dielectric { albedo, .. } => *albedo,
+            Material::DiffuseLight { albedo } => *albedo,
         }
     }
+
     pub fn get_fuzz(&self) -> f32 {
         match self {
             Material::Metal { fuzz, .. } => *fuzz,
             _ => 0.0,
         }
     }
+
+    pub fn emitted(&self) -> Vector3 {
+        match self {
+            Material::DiffuseLight { albedo } => *albedo,
+            Material::Lambertian { albedo } => *albedo * 0.0,
+            Material::Metal { albedo, .. } => *albedo * 0.0,
+            Material::Dielectric { albedo, .. } => *albedo * 0.0,
+        }
+    }
+
     pub fn new_lambertian(albedo: Vector3) -> Self {
         Material::Lambertian { albedo }
     }
+
     pub fn new_metal(albedo: Vector3, fuzz: f32) -> Self {
         Material::Metal { albedo, fuzz }
+    }
+
+    pub fn new_dielectric(albedo: Vector3, ir: f32) -> Self {
+        Material::Dielectric { albedo, ir }
+    }
+
+    pub fn new_diffuse_light(albedo: Vector3) -> Self {
+        Material::DiffuseLight { albedo }
     }
 
     pub fn scatter(&self, ray_in: Vector3, hit_record: &HitRecord) -> Option<(Vector3, Ray)> {
@@ -51,6 +75,36 @@ impl Material {
                     None
                 }
             }
+            Material::Dielectric { albedo, ir } => {
+                let unit_direction = ray_in.normalize();
+                let is_exiting = dot(unit_direction, hit_record.normal) > 0.0;
+
+                let refraction_ratio = if is_exiting { *ir } else { 1.0 / *ir };
+                let actual_normal = if is_exiting {
+                    hit_record.normal * -1.0
+                } else {
+                    hit_record.normal
+                };
+
+                let cos_theta = dot(unit_direction * -1.0, actual_normal).min(1.0);
+                let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+                let cannot_refract = refraction_ratio * sin_theta > 1.0;
+
+                let direction = if cannot_refract {
+                    reflect(unit_direction, actual_normal)
+                } else {
+                    let r_out_perp =
+                        (unit_direction + actual_normal * cos_theta) * refraction_ratio;
+                    let r_out_parallel =
+                        actual_normal * -((1.0 - dot(r_out_perp, r_out_perp)).abs().sqrt());
+                    r_out_perp + r_out_parallel
+                };
+
+                let scattered_ray = Ray::new(hit_record.point, direction);
+                Some((*albedo, scattered_ray))
+            }
+            Material::DiffuseLight { .. } => None,
         }
     }
 }

@@ -4,9 +4,8 @@ use indicatif::ProgressBar;
 use indicatif::ProgressStyle;
 use std::f32::consts::PI;
 
-use rand::RngExt;
-use rand::SeedableRng;
-use rand::rngs::Xoshiro256PlusPlus;
+use rand::Rng;
+use std::cell::RefCell;
 
 pub const INFINITY: f32 = f32::INFINITY;
 pub const EPSILON: f32 = 1e-6;
@@ -19,14 +18,16 @@ pub fn radians_to_degrees(radians: f32) -> f32 {
     radians * 180.0 / PI
 }
 
+thread_local! {
+    static RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
+}
+
 pub fn generate_random_float_unit() -> f32 {
-    let mut rng = Xoshiro256PlusPlus::from_rng(&mut rand::rng());
-    let x = rng.random();
-    return x;
+    RNG.with(|rng| rng.borrow_mut().r#gen::<f32>())
 }
 
 pub fn generate_random_float_in_range(min: f32, max: f32) -> f32 {
-    return min + (max - min) * generate_random_float_unit();
+    RNG.with(|rng| rng.borrow_mut().gen_range(min..max))
 }
 
 pub fn sample_from_unit_square() -> Vector3 {

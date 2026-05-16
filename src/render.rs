@@ -1,4 +1,4 @@
-use crate::bhv::{BVHNode, build_bhv_tree};
+use crate::bhv::{BVHNode, build_bhv_tree, hit_bvh};
 use crate::camera::Camera;
 use crate::hitrecord::HitRecord;
 use crate::ray::Ray;
@@ -10,7 +10,7 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 
 use crate::image::Imagef32;
-use crate::spheres::{Spheres, is_hit_sphere, setup_spheres};
+use crate::spheres::{Spheres, setup_sphere_scene1};
 use crate::utils::{EPSILON, INFINITY};
 use crate::vector3::Vector3;
 
@@ -43,7 +43,7 @@ impl Renderer {
         let height = if height < 1 { 1 } else { height };
 
         let camera = Camera::new(width, height);
-        let spheres = setup_spheres();
+        let spheres = setup_sphere_scene1();
 
         let samples_per_pixel = samples_per_pixel;
         let max_depth_recursion = max_depth_recursion;
@@ -120,35 +120,35 @@ impl Renderer {
         // then printing the progress in the console
 
         let progress_bar = setup_progress_bar(self.height);
+        let mut pixels = vec![Vector3::new(0.0, 0.0, 0.0); (self.width * self.height) as usize];
 
-        let pixels: Vec<Vector3> = (0..self.height)
-            .into_par_iter()
-            .map(|y| {
-                let row_pixels: Vec<Vector3> = (0..self.width)
-                    .map(|x| {
+        let batch_size = 16;
+        let row_width = self.width as usize;
+
+        pixels
+            .par_chunks_mut(row_width * batch_size)
+            .enumerate()
+            .for_each(|(batch_idx, chunk)| {
+                for (y_offset, row) in chunk.chunks_mut(row_width).enumerate() {
+                    let y = (batch_idx * batch_size) + y_offset;
+                    for x in 0..self.width {
                         let mut pixel_f = Vector3::new(0.0, 0.0, 0.0);
+
                         for _ in 0..self.samples_per_pixel {
                             let mut hit_record = HitRecord::new();
-                            hit_record.reset();
                             let mut recursion_depth = 0;
-                            let ray = get_ray_at_coordinates(x, y, &self.camera);
+                            let ray = get_ray_at_coordinates(x, y as u32, &self.camera);
                             pixel_f = pixel_f
                                 + self.ray_color(ray, &mut hit_record, &mut recursion_depth);
                         }
-                        pixel_f * (1.0 / self.samples_per_pixel as f32)
-                    })
-                    .collect();
 
-                progress_bar.inc(1);
-
-                row_pixels
-            })
-            .flatten()
-            .collect();
+                        row[x as usize] = pixel_f * (1.0 / self.samples_per_pixel as f32);
+                    }
+                    progress_bar.inc(1);
+                }
+            });
 
         progress_bar.finish_with_message("Done Rendering");
-
-        // the image is now ready to be returned
 
         Imagef32 {
             width: self.width,
@@ -166,22 +166,8 @@ impl Renderer {
         if *recursion_depth > self.max_depth_recursion {
             return Vector3::new(0.0, 0.0, 0.0);
         }
-        let mut hit_anything = false;
-        let mut current_sphere = 0;
-
-        for (sphere_index, (center, radius)) in self
-            .spheres
-            .spheres_centers
-            .iter()
-            .zip(&self.spheres.spheres_radius)
-            .enumerate()
-        {
-            if is_hit_sphere(ray, *center, *radius, hit_record) {
-                hit_anything = true;
-                current_sphere = sphere_index;
-                hit_record.t_max = hit_record.t;
-            }
-        }
+        let hit_anything = hit_bvh(&self.bvh, &ray, hit_record, &self.spheres);
+        let current_sphere = hit_record.current_sphere;
 
         if hit_anything {
             if let Some((attenuation, ray)) = self.spheres.spheres_materials[current_sphere]

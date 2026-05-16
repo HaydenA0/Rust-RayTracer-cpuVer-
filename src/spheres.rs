@@ -1,3 +1,4 @@
+use crate::camera::Camera;
 use crate::ray::Ray;
 use crate::utils::generate_random_float_in_range;
 use crate::utils::generate_random_float_unit;
@@ -26,7 +27,7 @@ impl Spheres {
         self.spheres_centers.len()
     }
 }
-pub fn setup_spheres() -> Spheres {
+pub fn setup_spheres_benchmark() -> Spheres {
     let mut spheres = Spheres::new();
 
     spheres
@@ -126,7 +127,6 @@ pub fn is_hit_sphere(
 
     let roots = [(h - delta_sqrt) / a, (h + delta_sqrt) / a];
 
-    // if else has a small small speedup
     let root = if let Some(&r) = roots
         .iter()
         .find(|&&r| r >= hit_record.t_min && r <= hit_record.t_max)
@@ -137,9 +137,12 @@ pub fn is_hit_sphere(
     };
 
     hit_record.t = root;
+    hit_record.t_max = root;
     hit_record.point = ray.at(root);
     hit_record.normal = (hit_record.point - sphere_center) / sphere_radius;
     hit_record.resolve_front_face_and_normal(ray.get_direction());
 
     return true;
 }
+
+pub fn setup_sphere_scene1(camera: &Camera) -> Spheres {}
