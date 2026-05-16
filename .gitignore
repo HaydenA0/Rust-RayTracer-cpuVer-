@@ -1,3 +1,21 @@
 /target
 
-*.ppm
+
+/target
+Cargo.lock
+
+
+.idea/
+.vscode/
+*.swp
+*.swo
+
+
+
+/output.ppm
+/images/*.ppm
+/images/*.png
+/profile.json.gz
+
+
+.DS_Store
